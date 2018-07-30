@@ -12,6 +12,7 @@
 
 #include "lldb/Core/ValueObjectList.h"
 #include "lldb/Host/Predicate.h"
+#include "lldb/Interpreter/PromptInterpolation.h"
 #include "lldb/Utility/ConstString.h"
 #include "lldb/Utility/Flags.h"
 #include "lldb/Utility/Stream.h"
@@ -431,6 +432,8 @@ private:
                                   const char *last_char,
                                   int skip_first_n_matches, int max_matches,
                                   StringList &matches, void *baton);
+
+  static const char* PromptCallback(Editline *editline, void *baton);
 #endif
 
 protected:
@@ -438,6 +441,7 @@ protected:
   std::unique_ptr<Editline> m_editline_ap;
 #endif
   IOHandlerDelegate &m_delegate;
+  PromptInterpolation m_prompt_interpolator;
   std::string m_prompt;
   std::string m_continuation_prompt;
   StringList *m_current_lines_ptr;
@@ -448,6 +452,8 @@ protected:
   bool m_interrupt_exits;
   bool m_editing; // Set to true when fetching a line manually (not using
                   // libedit)
+private:
+  std::string m_prompt_string;
 };
 
 // The order of base classes is important. Look at the constructor of
