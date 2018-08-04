@@ -293,7 +293,8 @@ IOHandlerEditline::IOHandlerEditline(
 #ifndef LLDB_DISABLE_LIBEDIT
       m_editline_ap(),
 #endif
-      m_delegate(delegate), m_prompt(), m_continuation_prompt(),
+      m_delegate(delegate), m_prompt_interpolator(m_debugger),
+      m_prompt(), m_continuation_prompt(),
       m_current_lines_ptr(nullptr), m_base_line_number(line_number_start),
       m_curr_line_idx(UINT32_MAX), m_multi_line(multi_line),
       m_color_prompts(color_prompts), m_interrupt_exits(true),
@@ -311,6 +312,7 @@ IOHandlerEditline::IOHandlerEditline(
                                      m_color_prompts));
     m_editline_ap->SetIsInputCompleteCallback(IsInputCompleteCallback, this);
     m_editline_ap->SetAutoCompleteCallback(AutoCompleteCallback, this);
+    m_editline_ap->SetPromptCallback(PromptCallback, this);
     // See if the delegate supports fixing indentation
     const char *indent_chars = delegate.IOHandlerGetFixIndentationCharacters();
     if (indent_chars) {
@@ -445,6 +447,15 @@ int IOHandlerEditline::AutoCompleteCallback(const char *current_line,
         max_matches, matches);
   return 0;
 }
+
+const char* IOHandlerEditline::PromptCallback(Editline *editline, void *baton) {
+  IOHandlerEditline *editline_reader = (IOHandlerEditline *)baton;
+  editline_reader->m_prompt_string =
+      editline_reader->m_prompt_interpolator.InterpolatePrompt(
+          editline_reader->m_prompt);
+  return editline_reader->m_prompt_string.c_str();
+}
+
 #endif
 
 const char *IOHandlerEditline::GetPrompt() {
@@ -463,7 +474,6 @@ const char *IOHandlerEditline::GetPrompt() {
 
 bool IOHandlerEditline::SetPrompt(llvm::StringRef prompt) {
   m_prompt = prompt;
-
 #ifndef LLDB_DISABLE_LIBEDIT
   if (m_editline_ap)
     m_editline_ap->SetPrompt(m_prompt.empty() ? nullptr : m_prompt.c_str());

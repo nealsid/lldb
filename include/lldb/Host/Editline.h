@@ -90,7 +90,7 @@ typedef const char *(*EditlinePromptCallbackType)(::EditLine *editline);
 class EditlineHistory;
 
 typedef std::shared_ptr<EditlineHistory> EditlineHistorySP;
-
+  
 typedef bool (*IsInputCompleteCallbackType)(Editline *editline,
                                             StringList &lines, void *baton);
 
@@ -102,6 +102,9 @@ typedef int (*CompleteCallbackType)(const char *current_line,
                                     const char *cursor, const char *last_char,
                                     int skip_first_n_matches, int max_matches,
                                     StringList &matches, void *baton);
+
+typedef const char *(*PromptCallbackType)(Editline *editline,
+                                          void *baton);
 
 /// Status used to decide when and how to start editing another line in
 /// multi-line sessions
@@ -180,6 +183,9 @@ public:
   /// Cancel this edit and oblitarate all trace of it
   bool Cancel();
 
+  /// Register a callback to retrieve the prompt.
+  void SetPromptCallback(PromptCallbackType callback, void *baton);
+  
   /// Register a callback for the tab key
   void SetAutoCompleteCallback(CompleteCallbackType callback, void *baton);
 
@@ -324,6 +330,8 @@ private:
 
   bool CompleteCharacter(char ch, EditLineGetCharType &out);
 
+  const char* InvokePromptCallback();
+
 private:
 #if LLDB_EDITLINE_USE_WCHAR
   std::wstring_convert<std::codecvt_utf8<wchar_t>> m_utf8conv;
@@ -358,7 +366,8 @@ private:
   const char *m_fix_indentation_callback_chars = nullptr;
   CompleteCallbackType m_completion_callback = nullptr;
   void *m_completion_callback_baton = nullptr;
-
+  PromptCallbackType m_prompt_callback = nullptr;
+  void *m_prompt_callback_baton = nullptr;
   std::mutex m_output_mutex;
 };
 }
