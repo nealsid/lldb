@@ -122,6 +122,8 @@ static FormatEntity::Entry::Definition g_file_child_entries[] = {
 
 static FormatEntity::Entry::Definition g_frame_child_entries[] = {
     ENTRY("index", FrameIndex, UInt32),
+    ENTRY("index1based", FrameIndex1Based, UInt32),
+    ENTRY("count", FrameCount, UInt32),
     ENTRY("pc", FrameRegisterPC, UInt64),
     ENTRY("fp", FrameRegisterFP, UInt64),
     ENTRY("sp", FrameRegisterSP, UInt64),
@@ -170,6 +172,7 @@ static FormatEntity::Entry::Definition g_thread_child_entries[] = {
     ENTRY("id", ThreadID, UInt64),
     ENTRY("protocol_id", ThreadProtocolID, UInt64),
     ENTRY("index", ThreadIndexID, UInt32),
+    ENTRY("count", ThreadCount, UInt32),
     ENTRY_CHILDREN("info", ThreadInfo, None, g_string_entry),
     ENTRY("queue", ThreadQueue, CString),
     ENTRY("name", ThreadName, CString),
@@ -337,6 +340,7 @@ const char *FormatEntity::Entry::TypeToCString(Type t) {
     ENUM_TO_CSTR(ThreadID);
     ENUM_TO_CSTR(ThreadProtocolID);
     ENUM_TO_CSTR(ThreadIndexID);
+    ENUM_TO_CSTR(ThreadCount);
     ENUM_TO_CSTR(ThreadName);
     ENUM_TO_CSTR(ThreadQueue);
     ENUM_TO_CSTR(ThreadStopReason);
@@ -350,6 +354,8 @@ const char *FormatEntity::Entry::TypeToCString(Type t) {
     ENUM_TO_CSTR(File);
     ENUM_TO_CSTR(Lang);
     ENUM_TO_CSTR(FrameIndex);
+    ENUM_TO_CSTR(FrameIndex1Based);
+    ENUM_TO_CSTR(FrameCount);
     ENUM_TO_CSTR(FrameNoDebug);
     ENUM_TO_CSTR(FrameRegisterPC);
     ENUM_TO_CSTR(FrameRegisterSP);
@@ -1239,6 +1245,19 @@ bool FormatEntity::Format(const Entry &entry, Stream &s,
     }
     return false;
 
+  case Entry::Type::ThreadCount:
+    if (exe_ctx) {
+      if (exe_ctx->HasProcessScope()) {
+        auto thread_count = exe_ctx->GetProcessSP()->GetThreadList().GetSize();
+        const char *format = "%" PRIu32;
+        if (!entry.printf_format.empty())
+          format = entry.printf_format.c_str();
+        s.Printf(format, thread_count);
+        return true;
+      }
+    }
+    return false;
+
   case Entry::Type::ThreadIndexID:
     if (exe_ctx) {
       Thread *thread = exe_ctx->GetThreadPtr();
@@ -1421,6 +1440,32 @@ bool FormatEntity::Format(const Entry &entry, Stream &s,
     }
     return false;
 
+  case Entry::Type::FrameIndex1Based:
+    if (exe_ctx) {
+      StackFrame *frame = exe_ctx->GetFramePtr();
+      if (frame) {
+        const char *format = "%" PRIu32;
+        if (!entry.printf_format.empty())
+          format = entry.printf_format.c_str();
+        s.Printf(format, frame->GetFrameIndex() + 1);
+        return true;
+      }
+    }
+    return false;
+    
+  case Entry::Type::FrameCount:
+    if (exe_ctx) {
+      Thread* thread = exe_ctx->GetThreadPtr();
+      if (thread) {
+        const char *format = "%" PRIu32;
+        if (!entry.printf_format.empty())
+          format = entry.printf_format.c_str();
+        s.Printf(format, thread->GetStackFrameCount());
+        return true;
+      }
+    }
+    return false;
+    
   case Entry::Type::FrameRegisterPC:
     if (exe_ctx) {
       StackFrame *frame = exe_ctx->GetFramePtr();

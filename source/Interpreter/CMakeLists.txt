@@ -41,6 +41,7 @@ add_lldb_library(lldbInterpreter
   OptionGroupVariable.cpp
   OptionGroupWatchpoint.cpp
   Options.cpp
+  PromptInterpolation.cpp
   Property.cpp
   ScriptInterpreter.cpp
 
