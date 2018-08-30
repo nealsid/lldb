@@ -421,16 +421,14 @@ public:
 
 private:
 #ifndef LLDB_DISABLE_LIBEDIT
-  static bool IsInputCompleteCallback(Editline *editline, StringList &lines,
-                                      void *baton);
+  bool IsInputCompleteCallback(Editline *editline, StringList &lines);
 
-  static int FixIndentationCallback(Editline *editline, const StringList &lines,
-                                    int cursor_position, void *baton);
+  int FixIndentationCallback(Editline *editline, const StringList &lines,
+                             int cursor_position);
 
-  static int AutoCompleteCallback(const char *current_line, const char *cursor,
-                                  const char *last_char,
-                                  int skip_first_n_matches, int max_matches,
-                                  StringList &matches, void *baton);
+  int AutoCompleteCallback(const char *current_line, const char *cursor,
+                           const char *last_char, int skip_first_n_matches,
+                           int max_matches, StringList &matches);
 #endif
 
 protected:

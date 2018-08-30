@@ -576,8 +576,7 @@ unsigned char Editline::BreakLineCommand(int ch) {
       lines.AppendString(new_line_fragment);
 #endif
 
-      int indent_correction = m_fix_indentation_callback(
-          this, lines, 0, m_fix_indentation_callback_baton);
+      int indent_correction = m_fix_indentation_callback(this, lines, 0);
       new_line_fragment = FixIndentation(new_line_fragment, indent_correction);
       m_revert_cursor_index = GetIndentation(new_line_fragment);
     }
@@ -612,8 +611,7 @@ unsigned char Editline::EndOrAddLineCommand(int ch) {
       info->cursor == info->lastchar) {
     if (m_is_input_complete_callback) {
       auto lines = GetInputAsStringList();
-      if (!m_is_input_complete_callback(this, lines,
-                                        m_is_input_complete_callback_baton)) {
+      if (!m_is_input_complete_callback(this, lines)) {
         return BreakLineCommand(ch);
       }
 
@@ -746,8 +744,7 @@ unsigned char Editline::NextLineCommand(int ch) {
     if (m_fix_indentation_callback) {
       StringList lines = GetInputAsStringList();
       lines.AppendString("");
-      indentation = m_fix_indentation_callback(
-          this, lines, 0, m_fix_indentation_callback_baton);
+      indentation = m_fix_indentation_callback(this, lines, 0);
     }
     m_input_lines.insert(
         m_input_lines.end(),
@@ -792,8 +789,8 @@ unsigned char Editline::FixIndentationCommand(int ch) {
   // Save the edits and determine the correct indentation level
   SaveEditedLine();
   StringList lines = GetInputAsStringList(m_current_line_index + 1);
-  int indent_correction = m_fix_indentation_callback(
-      this, lines, cursor_position, m_fix_indentation_callback_baton);
+  int indent_correction = m_fix_indentation_callback(this, lines,
+                                                     cursor_position);
 
   // If it is already correct no special work is needed
   if (indent_correction == 0)
@@ -854,7 +851,7 @@ unsigned char Editline::BufferEndCommand(int ch) {
 }
 
 unsigned char Editline::TabCommand(int ch) {
-  if (m_completion_callback == nullptr)
+  if (!m_completion_callback)
     return CC_ERROR;
 
   const LineInfo *line_info = el_line(m_editline);
@@ -865,7 +862,7 @@ unsigned char Editline::TabCommand(int ch) {
       line_info->buffer, line_info->cursor, line_info->lastchar,
       0,  // Don't skip any matches (start at match zero)
       -1, // Get all the matches
-      completions, m_completion_callback_baton);
+      completions);
 
   if (num_completions == 0)
     return CC_ERROR;
@@ -1236,27 +1233,6 @@ bool Editline::Cancel() {
   }
   m_editor_status = EditorStatus::Interrupted;
   return result;
-}
-
-void Editline::SetAutoCompleteCallback(CompleteCallbackType callback,
-                                       void *baton) {
-  m_completion_callback = callback;
-  m_completion_callback_baton = baton;
-}
-
-void Editline::SetIsInputCompleteCallback(IsInputCompleteCallbackType callback,
-                                          void *baton) {
-  m_is_input_complete_callback = callback;
-  m_is_input_complete_callback_baton = baton;
-}
-
-bool Editline::SetFixIndentationCallback(FixIndentationCallbackType callback,
-                                         void *baton,
-                                         const char *indent_chars) {
-  m_fix_indentation_callback = callback;
-  m_fix_indentation_callback_baton = baton;
-  m_fix_indentation_callback_chars = indent_chars;
-  return false;
 }
 
 bool Editline::GetLine(std::string &line, bool &interrupted) {

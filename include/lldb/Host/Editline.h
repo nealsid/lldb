@@ -42,6 +42,7 @@
 
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/lldb-private.h"
+#include "llvm/ADT/FunctionExtras.h"
 
 #if defined(_WIN32)
 #include "lldb/Host/windows/editlinewin.h"
@@ -56,6 +57,7 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Predicate.h"
+#include "lldb/Utility/StringList.h"   // for StringList
 
 namespace lldb_private {
 namespace line_editor {
@@ -81,27 +83,20 @@ using EditLineGetCharType = wchar_t;
 using EditLineGetCharType = char;
 #endif
 
-typedef int (*EditlineGetCharCallbackType)(::EditLine *editline,
+using EditlineGetCharCallbackType = int (*)(::EditLine *editline,
                                            EditLineGetCharType *c);
-typedef unsigned char (*EditlineCommandCallbackType)(::EditLine *editline,
+using EditlineCommandCallbackType = unsigned char (*)(::EditLine *editline,
                                                      int ch);
-typedef const char *(*EditlinePromptCallbackType)(::EditLine *editline);
+using EditlinePromptCallbackType = const char *(*)(::EditLine *editline);
 
 class EditlineHistory;
 
-typedef std::shared_ptr<EditlineHistory> EditlineHistorySP;
+using EditlineHistorySP = std::shared_ptr<EditlineHistory>;
 
-typedef bool (*IsInputCompleteCallbackType)(Editline *editline,
-                                            StringList &lines, void *baton);
-
-typedef int (*FixIndentationCallbackType)(Editline *editline,
-                                          const StringList &lines,
-                                          int cursor_position, void *baton);
-
-typedef int (*CompleteCallbackType)(const char *current_line,
-                                    const char *cursor, const char *last_char,
-                                    int skip_first_n_matches, int max_matches,
-                                    StringList &matches, void *baton);
+using IsInputCompleteCallbackType = llvm::unique_function<bool(Editline*, StringList&)>;
+using FixIndentationCallbackType = llvm::unique_function<int(Editline*, StringList&, int)>;
+using CompleteCallbackType = llvm::unique_function<int(const char*, const char*, const char*,
+                                                       int, int, StringList&)>;
 
 /// Status used to decide when and how to start editing another line in
 /// multi-line sessions
@@ -181,18 +176,23 @@ public:
   bool Cancel();
 
   /// Register a callback for the tab key
-  void SetAutoCompleteCallback(CompleteCallbackType callback, void *baton);
+  void SetAutoCompleteCallback(CompleteCallbackType callback) {
+    m_completion_callback = std::move(callback);
+  }
 
   /// Register a callback for testing whether multi-line input is complete
-  void SetIsInputCompleteCallback(IsInputCompleteCallbackType callback,
-                                  void *baton);
+  void SetIsInputCompleteCallback(IsInputCompleteCallbackType callback) {
+    m_is_input_complete_callback = std::move(callback);
+  }
 
   /// Register a callback for determining the appropriate indentation for a line
   /// when creating a newline.  An optional set of insertable characters can
-  /// also
-  /// trigger the callback.
-  bool SetFixIndentationCallback(FixIndentationCallbackType callback,
-                                 void *baton, const char *indent_chars);
+  /// also trigger the callback.
+  void SetFixIndentationCallback(FixIndentationCallbackType callback,
+                                 const char *indent_chars) {
+    m_fix_indentation_callback = std::move(callback);
+    m_fix_indentation_callback_chars = indent_chars;
+  }
 
   /// Prompts for and reads a single line of user input.
   bool GetLine(std::string &line, bool &interrupted);
@@ -351,13 +351,10 @@ private:
   FILE *m_output_file;
   FILE *m_error_file;
   ConnectionFileDescriptor m_input_connection;
-  IsInputCompleteCallbackType m_is_input_complete_callback = nullptr;
-  void *m_is_input_complete_callback_baton = nullptr;
-  FixIndentationCallbackType m_fix_indentation_callback = nullptr;
-  void *m_fix_indentation_callback_baton = nullptr;
+  IsInputCompleteCallbackType m_is_input_complete_callback;
+  FixIndentationCallbackType m_fix_indentation_callback;
   const char *m_fix_indentation_callback_chars = nullptr;
-  CompleteCallbackType m_completion_callback = nullptr;
-  void *m_completion_callback_baton = nullptr;
+  CompleteCallbackType m_completion_callback;
 
   std::mutex m_output_mutex;
 };
