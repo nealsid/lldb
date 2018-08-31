@@ -789,8 +789,8 @@ unsigned char Editline::FixIndentationCommand(int ch) {
   // Save the edits and determine the correct indentation level
   SaveEditedLine();
   StringList lines = GetInputAsStringList(m_current_line_index + 1);
-  int indent_correction = m_fix_indentation_callback(this, lines,
-                                                     cursor_position);
+  int indent_correction =
+      m_fix_indentation_callback(this, lines, cursor_position);
 
   // If it is already correct no special work is needed
   if (indent_correction == 0)

@@ -310,14 +310,14 @@ IOHandlerEditline::IOHandlerEditline(
                                      GetOutputFILE(), GetErrorFILE(),
                                      m_color_prompts));
     m_editline_ap->SetIsInputCompleteCallback(
-        [this] (Editline *editline, StringList& lines) {
+        [this](Editline *editline, StringList &lines) {
           return this->IsInputCompleteCallback(editline, lines);
         });
 
     m_editline_ap->SetAutoCompleteCallback(
-        [this] (const char *current_line, const char *cursor,
-                const char *last_char, int skip_first_n_matches,
-                int max_matches, StringList &matches) {
+        [this](const char *current_line, const char *cursor,
+               const char *last_char, int skip_first_n_matches, int max_matches,
+               StringList &matches) {
           return this->AutoCompleteCallback(current_line, cursor, last_char,
                                             skip_first_n_matches, max_matches,
                                             matches);
@@ -329,10 +329,12 @@ IOHandlerEditline::IOHandlerEditline(
       // The delegate does support indentation, hook it up so when any
       // indentation character is typed, the delegate gets a chance to fix it
       m_editline_ap->SetFixIndentationCallback(
-          [this] (Editline *editline, const StringList &lines,
-                  int cursor_position) {
-            return this->FixIndentationCallback(editline, lines, cursor_position);
-          }, indent_chars);
+          [this](Editline *editline, const StringList &lines,
+                 int cursor_position) {
+            return this->FixIndentationCallback(editline, lines,
+                                                cursor_position);
+          },
+          indent_chars);
     }
   }
 #endif
@@ -438,19 +440,15 @@ bool IOHandlerEditline::IsInputCompleteCallback(Editline *editline,
 int IOHandlerEditline::FixIndentationCallback(Editline *editline,
                                               const StringList &lines,
                                               int cursor_position) {
-  return m_delegate.IOHandlerFixIndentation(
-      *this, lines, cursor_position);
+  return m_delegate.IOHandlerFixIndentation(*this, lines, cursor_position);
 }
 
-int IOHandlerEditline::AutoCompleteCallback(const char *current_line,
-                                            const char *cursor,
-                                            const char *last_char,
-                                            int skip_first_n_matches,
-                                            int max_matches,
-                                            StringList &matches) {
-  return m_delegate.IOHandlerComplete(
-      *this, current_line, cursor, last_char, skip_first_n_matches,
-      max_matches, matches);
+int IOHandlerEditline::AutoCompleteCallback(
+    const char *current_line, const char *cursor, const char *last_char,
+    int skip_first_n_matches, int max_matches, StringList &matches) {
+  return m_delegate.IOHandlerComplete(*this, current_line, cursor, last_char,
+                                      skip_first_n_matches, max_matches,
+                                      matches);
 }
 #endif
 

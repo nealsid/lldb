@@ -57,7 +57,7 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Predicate.h"
-#include "lldb/Utility/StringList.h"   // for StringList
+#include "lldb/Utility/StringList.h" // for StringList
 
 namespace lldb_private {
 namespace line_editor {
@@ -84,9 +84,9 @@ using EditLineGetCharType = char;
 #endif
 
 using EditlineGetCharCallbackType = int (*)(::EditLine *editline,
-                                           EditLineGetCharType *c);
+                                            EditLineGetCharType *c);
 using EditlineCommandCallbackType = unsigned char (*)(::EditLine *editline,
-                                                     int ch);
+                                                      int ch);
 using EditlinePromptCallbackType = const char *(*)(::EditLine *editline);
 
 class EditlineHistory;
@@ -94,12 +94,11 @@ class EditlineHistory;
 using EditlineHistorySP = std::shared_ptr<EditlineHistory>;
 
 using IsInputCompleteCallbackType =
-  llvm::unique_function<bool(Editline*, StringList&)>;
+    llvm::unique_function<bool(Editline *, StringList &)>;
 using FixIndentationCallbackType =
-  llvm::unique_function<int(Editline*, StringList&, int)>;
-using CompleteCallbackType =
-  llvm::unique_function<int(const char*, const char*, const char*,
-                            int, int, StringList&)>;
+    llvm::unique_function<int(Editline *, StringList &, int)>;
+using CompleteCallbackType = llvm::unique_function<int(
+    const char *, const char *, const char *, int, int, StringList &)>;
 
 /// Status used to decide when and how to start editing another line in
 /// multi-line sessions
