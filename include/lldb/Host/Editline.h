@@ -93,10 +93,13 @@ class EditlineHistory;
 
 using EditlineHistorySP = std::shared_ptr<EditlineHistory>;
 
-using IsInputCompleteCallbackType = llvm::unique_function<bool(Editline*, StringList&)>;
-using FixIndentationCallbackType = llvm::unique_function<int(Editline*, StringList&, int)>;
-using CompleteCallbackType = llvm::unique_function<int(const char*, const char*, const char*,
-                                                       int, int, StringList&)>;
+using IsInputCompleteCallbackType =
+  llvm::unique_function<bool(Editline*, StringList&)>;
+using FixIndentationCallbackType =
+  llvm::unique_function<int(Editline*, StringList&, int)>;
+using CompleteCallbackType =
+  llvm::unique_function<int(const char*, const char*, const char*,
+                            int, int, StringList&)>;
 
 /// Status used to decide when and how to start editing another line in
 /// multi-line sessions

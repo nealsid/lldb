@@ -129,9 +129,10 @@ EditlineAdapter::EditlineAdapter()
   _editline_sp->SetPrompt("> ");
 
   // Hookup our input complete callback.
-  _editline_sp->SetIsInputCompleteCallback([this] (Editline *editline, StringList &lines) {
-                                             return this->IsInputComplete(editline, lines);
-                                           });
+  auto input_complete_cb = [this] (Editline *editline, StringList &lines) {
+                             return this->IsInputComplete(editline, lines);
+                           };
+  _editline_sp->SetIsInputCompleteCallback(input_complete_cb);
 }
 
 void EditlineAdapter::CloseInput() {
